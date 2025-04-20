@@ -1,30 +1,186 @@
 import React, { useState } from 'react';
 import './GroupExpense.css';
 
+const GroupDetailsModal = ({ group, onClose }) => {
+  const [splitAmount, setSplitAmount] = useState('0.00');
+  const [memberAmounts, setMemberAmounts] = useState(
+    group.members.map(() => parseFloat(group.amount))
+  );
+  const [showCalculator, setShowCalculator] = useState(null);
+
+  const handleCalculation = (index, operation, value) => {
+    const amounts = [...memberAmounts];
+    const currentAmount = amounts[index];
+    
+    switch(operation) {
+      case 'add':
+        amounts[index] = currentAmount + parseFloat(value);
+        break;
+      case 'subtract':
+        amounts[index] = currentAmount - parseFloat(value);
+        break;
+      case 'multiply':
+        amounts[index] = currentAmount * parseFloat(value);
+        break;
+      case 'divide':
+        amounts[index] = currentAmount / parseFloat(value);
+        break;
+      case 'discount':
+        amounts[index] = currentAmount * (1 - parseFloat(value) / 100);
+        break;
+      default:
+        break;
+    }
+    setMemberAmounts(amounts);
+  };
+
+  return (
+    <div className="modal">
+      <div className="modal-content group-details-modal">
+        <div className="group-header">
+          <div className="group-title">
+            <span className="group-icon">{group.icon}</span>
+            <h2>{group.groupName}</h2>
+          </div>
+          <button className="close-button" onClick={onClose}>×</button>
+        </div>
+
+        <div className="group-info">
+          <p><strong>Purpose:</strong> {group.purpose}</p>
+          <p><strong>Total Amount:</strong> {group.currency || '₹'}{group.amount}</p>
+          <p><strong>Paid by:</strong> {group.paidBy}</p>
+          <p><strong>Date:</strong> {group.date} | {group.time}</p>
+          <p><strong>Description:</strong> {group.description}</p>
+        </div>
+
+        <div className="split-section">
+          <h3>Split Amount (per person)</h3>
+          <div className="split-calculator">
+            <input
+              type="number"
+              value={splitAmount}
+              onChange={(e) => setSplitAmount(e.target.value)}
+              className="input"
+              readOnly
+            />
+            <div className="calculator-buttons">
+              <button onClick={() => {
+                const equalSplit = (parseFloat(group.amount) / group.members.length).toFixed(2);
+                setSplitAmount(equalSplit);
+                setMemberAmounts(group.members.map(() => parseFloat(equalSplit)));
+              }}>
+                Split Equally ({group.currency || '₹'}{splitAmount})
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="members-list">
+          {group.members.map((member, index) => (
+            <div key={index} className="member-split-item">
+              <div className="member-info">
+                <span className="member-avatar">{member.avatar}</span>
+                {/* Member details with conditional owe color */}
+                <div className="member-details">
+                  <span className="member-name">{member.name}</span>
+                  <span
+                    className="member-owe"
+                    style={{ color: member.owe === 'Paid' ? '#4CAF50' : '#FF9800' }}
+                  >
+                    {member.owe}
+                  </span>
+                </div>
+              </div>
+              <div className="member-amount-section">
+                <span className="member-amount">{group.currency || '₹'}{memberAmounts[index].toFixed(2)}</span>
+                <button
+                  className="edit-amount-button"
+                  onClick={() => setShowCalculator(showCalculator === index ? null : index)}
+                >
+                  Edit
+                </button>
+                {showCalculator === index && (
+                  <div className="calculator-popup">
+                    <div className="calculator-row">
+                      <input
+                        type="number"
+                        defaultValue={memberAmounts[index].toFixed(2)}
+                        className="calc-input"
+                        id={`calc-value-${index}`}
+                        style={{ appearance: 'textfield' }}
+                      />
+                      <select className="calc-operation" id={`calc-operation-${index}`}>
+                        <option value="add">Add (+)</option>
+                        <option value="subtract">Subtract (-)</option>
+                        <option value="multiply">Multiply (×)</option>
+                        <option value="divide">Divide (÷)</option>
+                        <option value="discount">Discount (%)</option>
+                      </select>
+                      <button
+                        onClick={() => {
+                          const value = document.getElementById(`calc-value-${index}`).value;
+                          const operation = document.getElementById(`calc-operation-${index}`).value;
+                          handleCalculation(index, operation, value);
+                        }}
+                      >
+                        Apply
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const GroupExpense = () => {
+  // Add currency state with other states
+  const [currency, setCurrency] = useState('₹');
   const [expenseData, setExpenseData] = useState({
     purpose: '',
     groupTotal: '',
-    memberCount: '',
+    memberCount: 0,
     splitWith: [],
     date: '',
     time: '',
-    description: ''
+    description: '',
   });
-  
+
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
   const [memberName, setMemberName] = useState('');
+  const [payerName, setPayerName] = useState('');
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [transactions, setTransactions] = useState([]);
+  const [showGroupDetails, setShowGroupDetails] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState(null);
+  const [groupProfile, setGroupProfile] = useState({
+    name: 'Default Group',
+    icon: '👥',
+    paidBy: ''
+  });
+
+  const updateGroupProfile = (newName, newIcon, newPaidBy) => {
+    setGroupProfile({
+      name: newName || groupProfile.name,
+      icon: newIcon || groupProfile.icon,
+      paidBy: newPaidBy !== undefined ? newPaidBy : groupProfile.paidBy
+    });
+  };
 
   const handleAddMember = () => {
     if (memberName.trim()) {
       setExpenseData(prev => ({
         ...prev,
-        splitWith: [...prev.splitWith, { 
+        splitWith: [...prev.splitWith, {
           name: memberName.trim(),
-          avatar: '👤'
+          avatar: '👤',
+          owe: payerName
         }],
-        memberCount: String(prev.splitWith.length + 1) 
+        memberCount: prev.splitWith.length + 1
       }));
       setMemberName('');
       setShowAddMemberModal(false);
@@ -33,24 +189,15 @@ const GroupExpense = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!expenseData.memberCount || parseInt(expenseData.memberCount) <= 0) {
+    if (!expenseData.memberCount || expenseData.memberCount <= 0) {
       alert('Number of members must be greater than 0');
       return;
     }
-    console.log('Group Expense Data:', expenseData);
+    updateGroupProfile(expenseData.purpose, null, payerName);
     setShowSuccessModal(true);
   };
 
-  // Add these new states at the top with other states
-  const [transactions, setTransactions] = useState([]);
-  const [showGroupDetails, setShowGroupDetails] = useState(false);
-  const [selectedGroup, setSelectedGroup] = useState(null);
-  const [groupProfile, setGroupProfile] = useState({
-    name: 'Default Group',
-    icon: '👥'
-  });
-  
-  // Modify handleGotIt to save the transaction
+  // Add handleGotIt function right after state declarations
   const handleGotIt = () => {
     setShowSuccessModal(false);
     setTransactions(prev => [...prev, {
@@ -58,78 +205,25 @@ const GroupExpense = () => {
       icon: groupProfile.icon,
       purpose: expenseData.purpose,
       amount: expenseData.groupTotal,
+      currency: currency,
       date: expenseData.date,
       time: expenseData.time,
       members: expenseData.splitWith,
-      description: expenseData.description
+      description: expenseData.description,
+      paidBy: payerName
     }]);
+    // Reset form
     setExpenseData({
       purpose: '',
       groupTotal: '',
-      memberCount: '',
+      memberCount: 0,
       splitWith: [],
       date: '',
       time: '',
-      description: ''
+      description: '',
     });
-  };
-  
-  // Add this new component at the bottom of your component, before the final return
-  const GroupDetailsModal = ({ group, onClose }) => {
-    const [splitAmount, setSplitAmount] = useState(
-      (parseFloat(group.amount) / group.members.length).toFixed(2)
-    );
-  
-    return (
-      <div className="modal">
-        <div className="modal-content group-details-modal">
-          <div className="group-header">
-            <div className="group-title">
-              <span className="group-icon">{group.icon}</span>
-              <h2>{group.groupName}</h2>
-            </div>
-            <button className="close-button" onClick={onClose}>×</button>
-          </div>
-  
-          <div className="group-info">
-            <p><strong>Purpose:</strong> {group.purpose}</p>
-            <p><strong>Total Amount:</strong> £{group.amount}</p>
-            <p><strong>Date:</strong> {group.date} | {group.time}</p>
-            <p><strong>Description:</strong> {group.description}</p>
-          </div>
-  
-          <div className="split-section">
-            <h3>Split Amount (per person)</h3>
-            <div className="split-calculator">
-              <input
-                type="number"
-                value={splitAmount}
-                onChange={(e) => setSplitAmount(e.target.value)}
-                className="input"
-              />
-              <div className="calculator-buttons">
-                <button onClick={() => setSplitAmount((parseFloat(group.amount) / group.members.length).toFixed(2))}>
-                  Split Equally
-                </button>
-              </div>
-            </div>
-          </div>
-  
-          <div className="members-list">
-            <h3>Members</h3>
-            {group.members.map((member, index) => (
-              <div key={index} className="member-split-item">
-                <div className="member-info">
-                  <span className="member-avatar">{member.avatar}</span>
-                  <span className="member-name">{member.name}</span>
-                </div>
-                <span className="member-amount">£{splitAmount}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
+    setPayerName('');
+    updateGroupProfile('Default Group', '👥', '');
   };
 
   return (
@@ -170,14 +264,31 @@ const GroupExpense = () => {
 
                 <div className="form-group">
                   <label className="label">Group total expense</label>
-                  <input
-                    className="input"
-                    type="number"
-                    value={expenseData.groupTotal}
-                    onChange={(e) => setExpenseData({...expenseData, groupTotal: e.target.value})}
-                    placeholder="£0.00"
-                    step="any"
-                  />
+                  <div className="expense-input-container">
+                    <select 
+                      className="currency-select"
+                      value={currency}
+                      onChange={(e) => setCurrency(e.target.value)}
+                    >
+                      <option value="₹">₹ (INR)</option>
+                      <option value="£">£ (GBP)</option>
+                      <option value="$">$ (USD)</option>
+                      <option value="€">€ (EUR)</option>
+                      <option value="¥">¥ (JPY)</option>
+                      <option value="A$">A$ (AUD)</option>
+                      <option value="C$">C$ (CAD)</option>
+                      <option value="CHF">CHF (Swiss Franc)</option>
+                      <option value="CNY">CNY (Chinese Yuan)</option>
+                    </select>
+                    <input
+                      className="input"
+                      type="number"
+                      value={expenseData.groupTotal}
+                      onChange={(e) => setExpenseData({...expenseData, groupTotal: e.target.value})}
+                      placeholder="0.00"
+                      step="any"
+                    />
+                  </div>
                 </div>
 
                 <div className="form-group">
@@ -190,7 +301,7 @@ const GroupExpense = () => {
                     onChange={(e) => {
                       const value = e.target.value;
                       if (parseInt(value) > 0 || value === '') {
-                        setExpenseData({...expenseData, memberCount: value});
+                        setExpenseData({...expenseData, memberCount: parseInt(value) || 0});
                       }
                     }}
                     placeholder="Enter"
@@ -206,13 +317,14 @@ const GroupExpense = () => {
                           <div className="member-content">
                             <div className="member-avatar-wrapper">
                               <div className="member-avatar">{member.avatar}</div>
-                              <button 
+                              <button
+                                type="button"
                                 className="remove-member"
                                 onClick={() => {
                                   setExpenseData(prev => ({
                                     ...prev,
                                     splitWith: prev.splitWith.filter((_, i) => i !== index),
-                                    memberCount: String(prev.splitWith.length - 1)
+                                    memberCount: prev.splitWith.length - 1
                                   }));
                                 }}
                               >
@@ -220,11 +332,12 @@ const GroupExpense = () => {
                               </button>
                             </div>
                             <span className="member-name">{member.name}</span>
+                            <span className="member-owe">{member.owe}</span>
                           </div>
                         </div>
                       ))}
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         className="add-member-button"
                         onClick={() => setShowAddMemberModal(true)}
                       >
@@ -232,6 +345,17 @@ const GroupExpense = () => {
                       </button>
                     </div>
                   </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="label">Who Paid</label>
+                  <input
+                    className="input"
+                    type="text"
+                    value={payerName}
+                    onChange={(e) => setPayerName(e.target.value)}
+                    placeholder="Enter name of person who paid"
+                  />
                 </div>
               </div>
 
@@ -274,7 +398,6 @@ const GroupExpense = () => {
             <button className="submit-button" type="submit">ADD GROUP EXPENSE</button>
           </form>
 
-          {/* Move transactions section inside the return statement */}
           <div className="transactions-section">
             <div className="transactions-header">
               <h2>All Transactions</h2>
@@ -282,8 +405,8 @@ const GroupExpense = () => {
             </div>
             <div className="transactions-list">
               {transactions.map((transaction, index) => (
-                <div 
-                  key={index} 
+                <div
+                  key={index}
                   className="transaction-item"
                   onClick={() => {
                     setSelectedGroup(transaction);
@@ -296,9 +419,10 @@ const GroupExpense = () => {
                   <div className="transaction-details">
                     <h3>{transaction.groupName}</h3>
                     <p>{transaction.date} | {transaction.time}</p>
+                    <p><strong>Paid by:</strong> {transaction.paidBy}</p>
                   </div>
                   <div className="transaction-amount">
-                    £{parseFloat(transaction.amount).toFixed(2)}
+                    {transaction.currency || '₹'}{parseFloat(transaction.amount).toFixed(2)}
                   </div>
                 </div>
               ))}
@@ -331,9 +455,9 @@ const GroupExpense = () => {
       )}
 
       {showGroupDetails && selectedGroup && (
-        <GroupDetailsModal 
-          group={selectedGroup} 
-          onClose={() => setShowGroupDetails(false)} 
+        <GroupDetailsModal
+          group={selectedGroup}
+          onClose={() => setShowGroupDetails(false)}
         />
       )}
     </div>
