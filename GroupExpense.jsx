@@ -269,6 +269,7 @@ const GroupExpense = () => {
                       className="currency-select"
                       value={currency}
                       onChange={(e) => setCurrency(e.target.value)}
+                      style={{ width: '50px', fontSize: '0.9em', padding: '4px' }}
                     >
                       <option value="₹">₹ (INR)</option>
                       <option value="£">£ (GBP)</option>
@@ -282,11 +283,11 @@ const GroupExpense = () => {
                     </select>
                     <input
                       className="input"
-                      type="number"
+                      type="text"
                       value={expenseData.groupTotal}
                       onChange={(e) => setExpenseData({...expenseData, groupTotal: e.target.value})}
                       placeholder="0.00"
-                      step="any"
+                      style={{ fontSize: '1.5em', padding: '8px', width: 'calc(100% - 60px)' }}
                     />
                   </div>
                 </div>
