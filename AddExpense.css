@@ -1,99 +1,65 @@
 @import "../styles/variables.css";
 
 .container {
-  max-width: 600px;
+  max-width: 800px;
   margin: 0 auto;
-  padding: 20px;
-  background-color: var(--bg-dark);
+  padding: 32px 24px;
+  background-color: #000000;
   min-height: 100vh;
-  color: var(--text-primary);
-  position: relative;
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 30px;
-  position: relative;
-}
-
-.back-button {
-  background: none;
-  border: none;
-  color: var(--text-primary);
-  font-size: 24px;
-  cursor: pointer;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-full);
-  transition: all var(--transition-fast) ease;
-}
-
-.back-button:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: var(--primary-teal);
-}
-
-.header-title {
-  margin-left: 15px;
-  font-size: 20px;
-  font-weight: 600;
-  background: var(--gradient-teal-coral);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-fill-color: transparent;
-}
-
-.profile-section {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  background: rgba(255, 255, 255, 0.08);
-  padding: 8px 12px;
-  border-radius: var(--radius-full);
-  backdrop-filter: blur(5px);
-  transition: all var(--transition-normal) ease;
-  border: 1px solid transparent;
-}
-
-.profile-section:hover {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: var(--primary-gold);
-  box-shadow: var(--glow-gold);
-}
-
-.profile-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--bg-card);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  border: 1px solid var(--primary-gold);
-}
-
-.profile-name {
-  color: var(--text-primary);
-  font-size: 14px;
-  font-weight: 500;
 }
 
 .form {
-  display: flex;
-  flex-direction: column;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 16px;
+  padding: 32px;
+  margin-top: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.form-main-section {
+  display: grid;
   gap: 24px;
 }
 
+.title-group {
+  grid-column: 1 / -1;
+}
+
+.amount-group {
+  grid-column: 1 / -1;
+}
+
+.datetime-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.description-group {
+  grid-column: 1 / -1;
+}
+
+.description-input {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.expense-input-container {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 12px;
+  border-radius: 12px;
+}
+
+.amount-input {
+  font-size: 24px;
+  font-weight: 500;
+}
+
+/* Keep your existing styles for animations and effects */
 .form-group {
   display: flex;
   flex-direction: column;
