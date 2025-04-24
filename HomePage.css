@@ -1,20 +1,39 @@
+@import "../styles/variables.css";
+
 .home-container {
   min-height: 100vh;
-  background-color: #1a1a1a;
-  padding-top: 40px;
+  background-color: var(--bg-dark);
+  padding: 40px 20px;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .app-header {
   padding: 20px;
-  margin-bottom: 30px;
+  margin-bottom: 40px;
+  text-align: center;
+  position: relative;
 }
 
 .app-title {
-  color: #00ff9d;
-  font-size: 36px;
+  color: var(--primary-teal);
+  font-size: clamp(28px, 5vw, 36px);
   margin-bottom: 30px;
   font-weight: bold;
   letter-spacing: 2px;
+  position: relative;
+  display: inline-block;
+}
+
+.app-title::after {
+  content: "";
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary-coral), var(--primary-teal));
+  border-radius: var(--radius-full);
 }
 
 .tabs {
@@ -23,30 +42,77 @@
   gap: 20px;
   max-width: 600px;
   margin: 0 auto;
+  position: relative;
+  z-index: 1;
 }
 
 .tab {
   padding: 15px 30px;
   border: none;
-  border-radius: 8px;
-  background-color: #2a2a2a;
-  color: white;
+  border-radius: var(--radius-md);
+  background-color: var(--bg-card);
+  color: var(--text-primary);
   font-size: 16px;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all var(--transition-normal) ease;
   flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.tab::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 100%;
+  background-color: rgba(92, 232, 228, 0.1);
+  transition: width var(--transition-normal) ease;
+  z-index: -1;
+}
+
+.tab:hover::before {
+  width: 100%;
 }
 
 .tab:hover {
-  background-color: #333;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .tab.active {
-  background-color: #00ff9d;
-  color: black;
-  font-weight: bold;
+  background-color: var(--primary-teal);
+  color: var(--bg-darker);
+  font-weight: 600;
+  box-shadow: 0 0 15px rgba(92, 232, 228, 0.4);
 }
 
 .content {
-  margin-top: 20px;
+  margin-top: 30px;
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .tabs {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .tab {
+    width: 100%;
+  }
 }
